@@ -2,53 +2,139 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cookie Empire: Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cookie Empire: Ultra</title>
     <style>
-        body { background-color: #111; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; }
-        .stats-container { text-align: center; margin-bottom: 10px; }
-        .cookies-display { font-size: 42px; font-weight: bold; color: #f1c40f; }
-        
-        #cookie { font-size: 140px; cursor: pointer; user-select: none; transition: transform 0.05s; margin: 15px 0; display: inline-block; }
-        #cookie:active { transform: scale(0.92); }
-
-        .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; max-width: 400px; }
-        .card { background: #222; padding: 12px; border-radius: 12px; border: 1px solid #444; text-align: center; }
-        
-        button { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        body { background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; justify-content: center; touch-action: manipulation; }
+        #stats { text-align: center; margin-bottom: 10px; }
+        #count { font-size: 48px; color: #f1c40f; font-weight: bold; }
+        #cookie { font-size: 120px; cursor: pointer; user-select: none; margin: 20px; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
+        #cookie:active { transform: scale(0.9); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
+        .card { background: #222; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #444; }
+        button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; }
         .buy-btn { background: #27ae60; color: white; }
-        .buy-btn:disabled { background: #333; color: #666; }
-
-        .settings-bar { margin-top: 15px; display: flex; gap: 10px; }
-        .menu-btn { background: #555; color: white; padding: 10px 20px; }
-
-        /* Modal / Menu */
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2c3e50; padding: 20px; border-radius: 15px; width: 280px; z-index: 100; border: 2px solid #34495e; }
-        .setting-row { display: flex; justify-content: space-between; margin: 15px 0; align-items: center; }
-        
-        #leaderboard-list { text-align: left; background: #1a252f; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto; font-size: 14px; }
+        .buy-btn:disabled { background: #444; color: #888; }
+        .menu-btn { background: #555; color: white; margin-top: 10px; width: auto; padding: 10px 20px; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #333; padding: 20px; border-radius: 15px; width: 80%; z-index: 1000; border: 2px solid #555; }
+        .row { display: flex; justify-content: space-between; margin: 15px 0; align-items: center; }
+        #leaderboard-list { text-align: left; background: #222; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="stats-container">
-        <div class="cookies-display"><span id="count">0</span> 🍪</div>
-        <div style="color: #aaa;">Clicks: <span id="val-click">1</span> | Auto: <span id="val-auto">0</span>/s</div>
+    <div id="stats">
+        <div id="count">0</div>
+        <div style="color:#aaa">Per Click: <span id="p-click">1</span> | Per Sec: <span id="p-auto">0</span></div>
     </div>
 
     <div id="cookie">🍪</div>
 
-    <div class="upgrade-grid">
+    <div class="grid">
         <div class="card">
-            <button id="buy-click" class="buy-btn">Double Clicks</button>
-            <div style="font-size: 12px; margin-top:5px;">Cost: <span id="cost-click">2</span></div>
+            <button id="btn-click" class="buy-btn" onclick="buyUpgrade('click')">Double Click</button>
+            <div style="font-size:12px; margin-top:5px">Cost: <span id="c-click">2</span></div>
         </div>
         <div class="card">
-            <button id="buy-auto" class="buy-btn">Double Auto</button>
-            <div style="font-size: 12px; margin-top:5px;">Cost: <span id="cost-auto">2</span></div>
+            <button id="btn-auto" class="buy-btn" onclick="buyUpgrade('auto')">Double Auto</button>
+            <div style="font-size:12px; margin-top:5px">Cost: <span id="c-auto">2</span></div>
         </div>
     </div>
 
-    <div class="settings-bar">
-        <button class="menu-btn" onclick="openMenu('settings')">⚙️ Settings</button>
-        <button class="menu-btn" onclick="openMenu('leaderboard')">🏆 R
+    <div style="display:flex; gap:10px">
+        <button class="menu-btn" onclick="toggleModal('settings')">⚙️ Settings</button>
+        <button class="menu-btn" onclick="toggleModal('leaderboard')">🏆 Ranks</button>
+    </div>
+
+    <div id="settings" class="modal">
+        <h3>Settings</h3>
+        <div class="row"><span>Mute Clicks</span><input type="checkbox" id="mute"></div>
+        <div class="row"><span>Auto-Buy</span><input type="checkbox" id="autobuy"></div>
+        <button onclick="toggleModal('settings')" style="background:#27ae60; color:white">Close</button>
+        <button onclick="hardReset()" style="background:#e74c3c; color:white; margin-top:10px">HARD RESET</button>
+    </div>
+
+    <div id="leaderboard" class="modal">
+        <h3>Leaderboard</h3>
+        <input type="text" id="nick" placeholder="Enter Nickname" style="width:90%; padding:8px; margin-bottom:10px">
+        <div id="leaderboard-list"></div>
+        <button onclick="updateName()" style="background:#3498db; color:white; margin-bottom:5px">Update Name</button>
+        <button onclick="toggleModal('leaderboard')" style="background:#555; color:white">Back</button>
+    </div>
+
+    <script>
+        let state = JSON.parse(localStorage.getItem('gameSave')) || {
+            cookies: 0, clickP: 1, autoP: 0, clickC: 2, autoC: 2, name: "Player"
+        };
+
+        function save() { localStorage.setItem('gameSave', JSON.stringify(state)); }
+
+        function updateUI() {
+            document.getElementById('count').innerText = Math.floor(state.cookies);
+            document.getElementById('p-click').innerText = state.clickP;
+            document.getElementById('p-auto').innerText = state.autoP;
+            document.getElementById('c-click').innerText = state.clickC;
+            document.getElementById('c-auto').innerText = state.autoC;
+            document.getElementById('btn-click').disabled = state.cookies < state.clickC;
+            document.getElementById('btn-auto').disabled = state.cookies < state.autoC;
+            document.getElementById('nick').value = state.name;
+        }
+
+        document.getElementById('cookie').onclick = () => {
+            state.cookies += state.clickP;
+            updateUI();
+            save();
+        };
+
+        function buyUpgrade(type) {
+            if (type === 'click' && state.cookies >= state.clickC) {
+                state.cookies -= state.clickC;
+                state.clickP *= 2;
+                state.clickC *= 2;
+            } else if (type === 'auto' && state.cookies >= state.autoC) {
+                state.cookies -= state.autoC;
+                state.autoP = state.autoP === 0 ? 1 : state.autoP * 2;
+                state.autoC *= 2;
+            }
+            updateUI();
+            save();
+        }
+
+        function toggleModal(id) {
+            const m = document.getElementById(id);
+            m.style.display = m.style.display === 'block' ? 'none' : 'block';
+            if (id === 'leaderboard') renderLeaderboard();
+        }
+
+        function updateName() {
+            state.name = document.getElementById('nick').value || "Player";
+            save();
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const list = [
+                {n: state.name, c: state.cookies},
+                {n: "Cookie King", c: 100000}, {n: "Tapper", c: 5000}
+            ].sort((a,b) => b.c - a.c);
+            document.getElementById('leaderboard-list').innerHTML = list.map((p, i) => `<div>${i+1}. ${p.n}: ${Math.floor(p.c)}</div>`).join('');
+        }
+
+        function hardReset() {
+            if(confirm("Delete everything?")) { localStorage.clear(); location.reload(); }
+        }
+
+        setInterval(() => {
+            if (state.autoP > 0) state.cookies += (state.autoP * state.clickP);
+            if (document.getElementById('autobuy').checked) {
+                if (state.cookies >= state.autoC) buyUpgrade('auto');
+                if (state.cookies >= state.clickC) buyUpgrade('click');
+            }
+            updateUI();
+            save();
+        }, 1000);
+
+        updateUI();
+    </script>
+</body>
+</html>
