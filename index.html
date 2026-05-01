@@ -3,40 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cookie Empire: Crash-Proof Edition</title>
+    <title>Cookie Empire: Alphabet Edition</title>
     <style>
         body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; touch-action: manipulation; width: 100vw; height: 100vh; }
         #game-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
         
-        /* SIDEBAR IDENTITY - Visible Everywhere */
-        #identity-bar { position: fixed; left: 10px; top: 10px; background: rgba(0,255,255,0.1); padding: 8px 15px; border-radius: 10px; font-size: 14px; border: 1px solid #0ff; cursor: pointer; z-index: 3000; transition: 0.3s; text-shadow: 0 0 5px #0ff; }
-        #identity-bar:hover { background: rgba(0,255,255,0.3); }
-
-        #count { font-size: 45px; color: #f1c40f; font-weight: bold; margin-bottom: 10px; }
-        #cookie { font-size: 100px; cursor: pointer; user-select: none; transition: transform 0.05s; display: inline-block; }
+        /* SIDEBAR IDENTITY */
+        #sidebar { position: fixed; left: 10px; top: 10px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+        .side-chip { background: rgba(0,255,255,0.1); padding: 8px 12px; border-radius: 8px; font-size: 13px; border: 1px solid #0ff; cursor: pointer; text-shadow: 0 0 5px #0ff; }
         
+        #count { font-size: 40px; color: #f1c40f; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        #cookie { font-size: 100px; cursor: pointer; user-select: none; transition: 0.05s; }
+        #cookie:active { transform: scale(0.90); }
+
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 92%; max-width: 400px; margin-top: 20px; }
-        .card { background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        .card { background: #1a1a1a; padding: 12px; border-radius: 12px; border: 1px solid #333; text-align: center; }
         button { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; }
         .buy-btn { background: #27ae60; color: white; }
-        .buy-btn:disabled { background: #2c3e50; color: #555; cursor: not-allowed; }
+        .buy-btn:disabled { background: #2c3e50; color: #555; }
         
-        /* MODALS */
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; z-index: 1000; border: 2px solid #444; }
-        
-        /* TESTER UI */
+        /* MODALS & LEADERBOARDS */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 20px; border-radius: 20px; width: 85%; max-width: 380px; z-index: 4000; border: 2px solid #444; max-height: 85vh; overflow-y: auto; }
+        .lb-box { background: #000; border: 1px solid #333; border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        .lb-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #222; }
+        .my-score { color: #0ff; font-weight: bold; }
+
         #tester-ui { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
-        .target { position: absolute; width: 8px; height: 8px; background: #0ff; border-radius: 1px; pointer-events: none; will-change: transform; box-shadow: 0 0 3px #0ff; }
-        #tester-controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; gap: 50px; } /* 1cm+ Gap */
-        .ctrl-btn { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        
-        #tester-stats { position: absolute; top: 60px; left: 10px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 1px solid #333; font-family: monospace; }
+        .target { position: absolute; width: 6px; height: 6px; background: #0ff; pointer-events: none; will-change: transform; }
+        #tester-controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; gap: 60px; }
+        .ctrl-btn { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="identity-bar" onclick="changeNick()">
-        <span id="display-nick">Setting Name...</span> | <span id="high-score">0</span> pts
+    <div id="sidebar">
+        <div class="side-chip" onclick="rename()">👤 <span id="side-name">Player</span></div>
+        <div class="side-chip" style="border-color: #f1c40f; color: #f1c40f;">🏆 <span id="side-best">0</span></div>
     </div>
 
     <div id="game-ui">
@@ -45,30 +47,38 @@
         <div class="grid">
             <div class="card">
                 <button id="btn-click" class="buy-btn" onclick="buy('click')">Click Up</button>
-                <div style="font-size:11px; margin-top:5px">Cost: <span id="c-click">2</span></div>
+                <div style="font-size:10px; margin-top:5px">Cost: <span id="c-click">2</span></div>
             </div>
             <div class="card">
                 <button id="btn-auto" class="buy-btn" onclick="buy('auto')">Auto Up</button>
-                <div style="font-size:11px; margin-top:5px">Cost: <span id="c-auto">2</span></div>
+                <div style="font-size:10px; margin-top:5px">Cost: <span id="c-auto">2</span></div>
             </div>
         </div>
-        <button onclick="openMenu()" style="background:#444; color:white; margin-top:20px; padding:10px 30px; border-radius:8px; border:1px solid #555;">⚙️ Empire Settings</button>
+        <button onclick="openMenu()" style="background:#444; color:white; margin-top:20px; padding:10px 30px; border-radius:8px;">⚙️ Rankings & Settings</button>
     </div>
 
     <div id="menu" class="modal">
-        <h2 style="margin:0">Settings</h2>
-        <div style="display:flex; justify-content:space-between; margin:20px 0;">
-            <span>Auto-Buy</span>
+        <h2 style="margin:0 0 15px 0; text-align:center;">Global Rankings</h2>
+        
+        <div style="font-size:13px; margin-bottom:5px; color:#f1c40f;">🍪 Cookie Alphabet Elites</div>
+        <div class="lb-box" id="lb-cookies"></div>
+
+        <div style="font-size:13px; margin-bottom:5px; color:#0ff;">🚀 Crash Tester Records</div>
+        <div class="lb-box" id="lb-crash"></div>
+
+        <div style="display:flex; justify-content:space-between; margin:15px 0;">
+            <span>Auto-Buy Upgrades</span>
             <input type="checkbox" id="autobuy">
         </div>
-        <button onclick="startTester()" style="background:#00d4ff; color:black; padding:15px; width:100%; border:none; border-radius:8px; font-weight:bold;">🚀 CRASH TESTER 3000</button>
-        <button onclick="closeMenu()" style="background:#444; color:white; width:100%; border:none; padding:10px; border-radius:8px; margin-top:10px;">Back</button>
+
+        <button onclick="startTester()" style="background:#8e44ad; color:white; padding:12px; width:100%; border:none; border-radius:8px; font-weight:bold; margin-bottom:10px;">START CRASH TESTER</button>
+        <button onclick="closeMenu()" style="background:#444; color:white; width:100%; border:none; padding:10px; border-radius:8px;">Return</button>
     </div>
 
     <div id="tester-ui">
-        <div id="tester-stats">
-            Targets: <span id="target-count" style="color:#0ff">0</span><br>
-            Max: <span id="max-session" style="color:#f1c40f">0</span>
+        <div style="position:absolute; top:80px; left:10px; font-family:monospace; background:rgba(0,0,0,0.8); padding:10px; border-radius:5px; border:1px solid #333;">
+            CURRENT: <span id="t-now" style="color:#0ff">0</span><br>
+            BEST: <span id="t-best" style="color:#f1c40f">0</span>
         </div>
         <div id="render-area"></div>
         <div id="tester-controls">
@@ -78,36 +88,59 @@
     </div>
 
     <script>
-        // LOAD DATA
-        let state = JSON.parse(localStorage.getItem('empireDataV3')) || {
-            cookies: 0, clickP: 1, autoP: 0, clickC: 2, autoC: 2, 
-            nick: "Player", bestCrash: 0
+        let state = JSON.parse(localStorage.getItem('alphaEmpire_v2')) || {
+            cookies: 0, clickP: 1, autoP: 0, clickC: 2, autoC: 2,
+            name: "Player", bestCrash: 0
         };
 
-        function save() { localStorage.setItem('empireDataV3', JSON.stringify(state)); }
+        const fakeCookies = [{n:"Richie", s:1e25}, {n:"Bot1", s:1e18}, {n:"Noob", s:500}];
+        const fakeCrash = [{n:"HardwareKiller", s:50000}, {n:"CPU_Burner", s:12000}];
 
+        function save() { localStorage.setItem('alphaEmpire_v2', JSON.stringify(state)); }
+
+        // THE LETTER SYSTEM (Your specific request)
         function format(num) {
-            if (num < 1000000) return Math.floor(num).toLocaleString();
-            const names = ["m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
-            let unitIdx = Math.floor(Math.log10(num) / 3) - 1;
-            let base = num / Math.pow(10, (unitIdx + 1) * 3);
-            return base.toFixed(2) + (names[unitIdx - 1] || "e" + (unitIdx * 3));
+            if (num < 1000) return Math.floor(num).toString();
+            
+            const alpha = "abcdefghijklmnopqrstuvwxyz";
+            let exponent = Math.floor(Math.log10(num) / 3);
+            let suffix = "";
+            
+            let unitIdx = exponent - 1; 
+            if (unitIdx < 26) {
+                suffix = alpha[unitIdx];
+            } else {
+                // Double letter logic (aa, ab...)
+                let first = Math.floor((unitIdx - 26) / 26);
+                let second = (unitIdx - 26) % 26;
+                suffix = alpha[first] + alpha[second];
+            }
+            
+            let base = num / Math.pow(10, exponent * 3);
+            return base.toFixed(2) + suffix;
         }
 
         function updateUI() {
             document.getElementById('count').innerText = format(state.cookies);
             document.getElementById('c-click').innerText = format(state.clickC);
             document.getElementById('c-auto').innerText = format(state.autoC);
-            document.getElementById('display-nick').innerText = state.nick;
-            document.getElementById('high-score').innerText = format(state.bestCrash);
+            document.getElementById('side-name').innerText = state.name;
+            document.getElementById('side-best').innerText = state.bestCrash.toLocaleString();
             document.getElementById('btn-click').disabled = state.cookies < state.clickC;
             document.getElementById('btn-auto').disabled = state.cookies < state.autoC;
         }
 
-        function changeNick() {
-            let n = prompt("Enter New Nickname:", state.nick);
-            if(n) state.nick = n;
+        function rename() {
+            let n = prompt("Change Nickname:", state.name);
+            if(n && n.trim() !== "") state.name = n.trim();
             updateUI(); save();
+        }
+
+        function drawLB() {
+            let cList = [...fakeCookies, {n:state.name, s:state.cookies, me:true}].sort((a,b)=>b.s-a.s);
+            let tList = [...fakeCrash, {n:state.name, s:state.bestCrash, me:true}].sort((a,b)=>b.s-a.s);
+            document.getElementById('lb-cookies').innerHTML = cList.map((p,i)=>`<div class="lb-row ${p.me?'my-score':''}"><span>#${i+1} ${p.n}</span><span>${format(p.s)}</span></div>`).join('');
+            document.getElementById('lb-crash').innerHTML = tList.map((p,i)=>`<div class="lb-row ${p.me?'my-score':''}"><span>#${i+1} ${p.n}</span><span>${p.s.toLocaleString()}</span></div>`).join('');
         }
 
         document.getElementById('cookie').onclick = () => { state.cookies += state.clickP; updateUI(); save(); };
@@ -121,75 +154,37 @@
             return false;
         }
 
-        function openMenu() { document.getElementById('menu').style.display = 'block'; }
+        function openMenu() { drawLB(); document.getElementById('menu').style.display = 'block'; }
         function closeMenu() { document.getElementById('menu').style.display = 'none'; save(); }
 
-        // THE "IMMORTAL" CRASH TESTER
-        let targets = [], testerActive = false, testerLoop = null;
-        function startTester() { 
-            document.getElementById('tester-ui').style.display = 'block'; 
-            targets = []; document.getElementById('render-area').innerHTML = "";
-            document.getElementById('target-count').innerText = "0";
-        }
-
-        function toggleTester() {
-            testerActive = !testerActive;
-            document.getElementById('play-btn').innerText = testerActive ? "⏸️" : "▶️";
-            if(testerActive) runTester();
-        }
-
-        function runTester() {
-            if(!testerActive) return;
-            
-            // SPAWN LOGIC - Increases difficulty
-            for(let i=0; i<10; i++) {
+        let targets = [], active = false;
+        function startTester() { closeMenu(); document.getElementById('tester-ui').style.display = 'block'; }
+        function toggleTester() { active = !active; document.getElementById('play-btn').innerText = active ? "⏸️" : "▶️"; if(active) loop(); }
+        function loop() {
+            if(!active) return;
+            for(let i=0; i<8; i++) {
                 const el = document.createElement('div'); el.className = 'target';
-                const t = { el, x: window.innerWidth/2, y: window.innerHeight/2, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15 };
+                const t = { el, x: window.innerWidth/2, y: window.innerHeight/2, vx: (Math.random()-0.5)*14, vy: (Math.random()-0.5)*14 };
                 document.getElementById('render-area').appendChild(el); targets.push(t);
             }
-
-            // GPU-ACCELERATED MOVEMENT
-            const w = window.innerWidth, h = window.innerHeight;
-            for(let i=0; i<targets.length; i++) {
-                let t = targets[i];
+            targets.forEach(t => {
                 t.x += t.vx; t.y += t.vy;
-                if(t.x <= 0 || t.x >= w) t.vx *= -1;
-                if(t.y <= 0 || t.y >= h) t.vy *= -1;
+                if(t.x<0 || t.x>window.innerWidth) t.vx*=-1;
+                if(t.y<0 || t.y>window.innerHeight) t.vy*=-1;
                 t.el.style.transform = `translate3d(${t.x}px, ${t.y}px, 0)`;
-            }
-
-            // SAVE MAX ON EVERY FRAME (Crash protection)
-            if(targets.length > state.bestCrash) {
-                state.bestCrash = targets.length;
-                save(); // Immediate save to disk
-            }
-
-            document.getElementById('target-count').innerText = targets.length.toLocaleString();
-            document.getElementById('max-session').innerText = targets.length.toLocaleString();
-            document.getElementById('high-score').innerText = format(state.bestCrash);
-            
-            testerLoop = requestAnimationFrame(runTester);
+            });
+            if(targets.length > state.bestCrash) { state.bestCrash = targets.length; save(); }
+            document.getElementById('t-now').innerText = targets.length.toLocaleString();
+            document.getElementById('t-best').innerText = state.bestCrash.toLocaleString();
+            requestAnimationFrame(loop);
         }
+        function confirmExit() { active=false; document.getElementById('tester-ui').style.display='none'; targets=[]; document.getElementById('render-area').innerHTML=""; updateUI(); }
 
-        function confirmExit() {
-            if(confirm("Exit run? Current targets will be cleared!")) {
-                testerActive = false;
-                document.getElementById('tester-ui').style.display = 'none';
-                targets = [];
-                document.getElementById('render-area').innerHTML = "";
-            }
-        }
-
-        // BACKGROUND ENGINE
         setInterval(() => {
-            if (state.autoP > 0) {
-                // Calculation speed fix: ensures no lag even at high numbers
-                let gain = (state.autoP * state.clickP * 0.1);
-                state.cookies += gain;
-            }
+            if (state.autoP > 0) state.cookies += (state.autoP * state.clickP * 0.1);
             if (document.getElementById('autobuy').checked) {
                 let cheap = state.clickC <= state.autoC ? 'click' : 'auto';
-                buy(cheap);
+                if(!buy(cheap)) buy(cheap==='click'?'auto':'click');
             }
             updateUI();
         }, 100);
