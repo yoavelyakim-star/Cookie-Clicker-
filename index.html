@@ -3,138 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cookie Empire: Ultra</title>
+    <title>Cookie Empire: Crash Tester 3000</title>
     <style>
-        body { background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; justify-content: center; touch-action: manipulation; }
-        #stats { text-align: center; margin-bottom: 10px; }
-        #count { font-size: 48px; color: #f1c40f; font-weight: bold; }
-        #cookie { font-size: 120px; cursor: pointer; user-select: none; margin: 20px; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
-        #cookie:active { transform: scale(0.9); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
-        .card { background: #222; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #444; }
-        button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .buy-btn { background: #27ae60; color: white; }
-        .buy-btn:disabled { background: #444; color: #888; }
-        .menu-btn { background: #555; color: white; margin-top: 10px; width: auto; padding: 10px 20px; }
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #333; padding: 20px; border-radius: 15px; width: 80%; z-index: 1000; border: 2px solid #555; }
-        .row { display: flex; justify-content: space-between; margin: 15px 0; align-items: center; }
-        #leaderboard-list { text-align: left; background: #222; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto; margin-bottom: 10px; }
+        body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; touch-action: manipulation; }
+        #game-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        #count { font-size: 45px; color: #f1c40f; font-weight: bold; }
+        #cookie { font-size: 100px; cursor: pointer; user-select: none; transition: 0.05s; }
+        
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; z-index: 1000; border: 2px solid #444; box-shadow: 0 0 50px black; }
+        .menu-btn { background: #444; color: white; padding: 10px 30px; border-radius: 8px; border: 1px solid #555; cursor: pointer; margin-top: 20px; }
+        
+        /* CRASH TESTER 3000 UI */
+        #tester-ui { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
+        #render-area { width: 100%; height: 100%; position: relative; }
+        .target { position: absolute; width: 10px; height: 10px; background: cyan; border-radius: 2px; pointer-events: none; }
+        
+        #tester-stats { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; border: 1px solid #333; pointer-events: none; }
+        #tester-controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; gap: 40px; } /* 40px gap is approx 1cm on most screens */
+        
+        .ctrl-btn { width: 70px; height: 70px; border-radius: 50%; border: none; font-weight: bold; cursor: pointer; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+        #play-btn { background: #27ae60; color: white; }
+        #exit-btn { background: #c0392b; color: white; }
+        
+        .alert-box { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border: 2px solid #e74c3c; padding: 20px; z-index: 3000; text-align: center; border-radius: 15px; width: 280px; }
     </style>
 </head>
 <body>
 
-    <div id="stats">
+    <div id="game-ui">
         <div id="count">0</div>
-        <div style="color:#aaa">Per Click: <span id="p-click">1</span> | Per Sec: <span id="p-auto">0</span></div>
+        <div id="cookie">🍪</div>
+        <button class="menu-btn" onclick="openMenu()">Settings / Crash Tester</button>
     </div>
 
-    <div id="cookie">🍪</div>
+    <div id="menu" class="modal">
+        <h2>Settings</h2>
+        <button onclick="startTester()" style="background:#8e44ad; color:white; padding:15px; border-radius:10px; width:100%; font-weight:bold; cursor:pointer;">🚀 LAUNCH CRASH TESTER 3000</button>
+        <button onclick="closeMenu()" style="background:#444; color:white; margin-top:20px; width:100%; border:none; padding:10px; border-radius:8px;">Back</button>
+    </div>
 
-    <div class="grid">
-        <div class="card">
-            <button id="btn-click" class="buy-btn" onclick="buyUpgrade('click')">Double Click</button>
-            <div style="font-size:12px; margin-top:5px">Cost: <span id="c-click">2</span></div>
+    <div id="tester-ui">
+        <div id="tester-stats">
+            <div style="font-size:18px; color:cyan;">Targets: <span id="target-count">0</span></div>
+            <div id="performance-msg" style="font-size:12px; color:#aaa; margin-top:5px;">System Idle...</div>
         </div>
-        <div class="card">
-            <button id="btn-auto" class="buy-btn" onclick="buyUpgrade('auto')">Double Auto</button>
-            <div style="font-size:12px; margin-top:5px">Cost: <span id="c-auto">2</span></div>
+        
+        <div id="render-area"></div>
+
+        <div id="tester-controls">
+            <button id="play-btn" class="ctrl-btn" onclick="toggleTester()">▶️</button>
+            <button id="exit-btn" class="ctrl-btn" onclick="confirmExit()">✖️</button>
         </div>
     </div>
 
-    <div style="display:flex; gap:10px">
-        <button class="menu-btn" onclick="toggleModal('settings')">⚙️ Settings</button>
-        <button class="menu-btn" onclick="toggleModal('leaderboard')">🏆 Ranks</button>
-    </div>
-
-    <div id="settings" class="modal">
-        <h3>Settings</h3>
-        <div class="row"><span>Mute Clicks</span><input type="checkbox" id="mute"></div>
-        <div class="row"><span>Auto-Buy</span><input type="checkbox" id="autobuy"></div>
-        <button onclick="toggleModal('settings')" style="background:#27ae60; color:white">Close</button>
-        <button onclick="hardReset()" style="background:#e74c3c; color:white; margin-top:10px">HARD RESET</button>
-    </div>
-
-    <div id="leaderboard" class="modal">
-        <h3>Leaderboard</h3>
-        <input type="text" id="nick" placeholder="Enter Nickname" style="width:90%; padding:8px; margin-bottom:10px">
-        <div id="leaderboard-list"></div>
-        <button onclick="updateName()" style="background:#3498db; color:white; margin-bottom:5px">Update Name</button>
-        <button onclick="toggleModal('leaderboard')" style="background:#555; color:white">Back</button>
+    <div id="exit-alert" class="alert-box">
+        <p>Are you sure you want to exit in the middle of a run? All progress will be deleted!</p>
+        <button onclick="actuallyExit()" style="background:#c0392b; color:white; padding:10px; border-radius:5px; border:none; margin-right:10px; cursor:pointer;">Yes, Exit</button>
+        <button onclick="cancelExit()" style="background:#444; color:white; padding:10px; border-radius:5px; border:none; cursor:pointer;">Cancel</button>
     </div>
 
     <script>
-        let state = JSON.parse(localStorage.getItem('gameSave')) || {
-            cookies: 0, clickP: 1, autoP: 0, clickC: 2, autoC: 2, name: "Player"
-        };
+        let state = JSON.parse(localStorage.getItem('crashEmpireData')) || { cookies: 0, clickP: 1 };
+        let targets = [];
+        let testerActive = false;
+        let testerLoop = null;
+        let lastFrameTime = performance.now();
 
-        function save() { localStorage.setItem('gameSave', JSON.stringify(state)); }
+        function save() { localStorage.setItem('crashEmpireData', JSON.stringify(state)); }
 
-        function updateUI() {
-            document.getElementById('count').innerText = Math.floor(state.cookies);
-            document.getElementById('p-click').innerText = state.clickP;
-            document.getElementById('p-auto').innerText = state.autoP;
-            document.getElementById('c-click').innerText = state.clickC;
-            document.getElementById('c-auto').innerText = state.autoC;
-            document.getElementById('btn-click').disabled = state.cookies < state.clickC;
-            document.getElementById('btn-auto').disabled = state.cookies < state.autoC;
-            document.getElementById('nick').value = state.name;
-        }
-
+        // MAIN GAME LOGIC
         document.getElementById('cookie').onclick = () => {
             state.cookies += state.clickP;
-            updateUI();
+            document.getElementById('count').innerText = Math.floor(state.cookies).toLocaleString();
             save();
         };
 
-        function buyUpgrade(type) {
-            if (type === 'click' && state.cookies >= state.clickC) {
-                state.cookies -= state.clickC;
-                state.clickP *= 2;
-                state.clickC *= 2;
-            } else if (type === 'auto' && state.cookies >= state.autoC) {
-                state.cookies -= state.autoC;
-                state.autoP = state.autoP === 0 ? 1 : state.autoP * 2;
-                state.autoC *= 2;
+        function openMenu() { document.getElementById('menu').style.display = 'block'; }
+        function closeMenu() { document.getElementById('menu').style.display = 'none'; }
+
+        // TESTER LOGIC
+        function startTester() {
+            closeMenu();
+            document.getElementById('tester-ui').style.display = 'block';
+            resetTester();
+        }
+
+        function resetTester() {
+            targets = [];
+            document.getElementById('render-area').innerHTML = "";
+            document.getElementById('target-count').innerText = "0";
+            document.getElementById('performance-msg').innerText = "Press Play to begin Stress Test";
+            testerActive = false;
+            document.getElementById('play-btn').innerText = "▶️";
+        }
+
+        function toggleTester() {
+            testerActive = !testerActive;
+            document.getElementById('play-btn').innerText = testerActive ? "⏸️" : "▶️";
+            if(testerActive) runTester();
+        }
+
+        function runTester() {
+            if(!testerActive) return;
+
+            const now = performance.now();
+            const deltaTime = now - lastFrameTime;
+            lastFrameTime = now;
+
+            // Spawn 5 new moving targets every frame to stress the system
+            for(let i=0; i<5; i++) {
+                spawnTarget();
             }
-            updateUI();
-            save();
-        }
 
-        function toggleModal(id) {
-            const m = document.getElementById(id);
-            m.style.display = m.style.display === 'block' ? 'none' : 'block';
-            if (id === 'leaderboard') renderLeaderboard();
-        }
+            const area = document.getElementById('render-area');
+            const w = window.innerWidth;
+            const h = window.innerHeight;
 
-        function updateName() {
-            state.name = document.getElementById('nick').value || "Player";
-            save();
-            renderLeaderboard();
-        }
+            targets.forEach(t => {
+                t.x += t.vx;
+                t.y += t.vy;
+                if(t.x <= 0 || t.x >= w) t.vx *= -1;
+                if(t.y <= 0 || t.y >= h) t.vy *= -1;
+                t.el.style.transform = `translate(${t.x}px, ${t.y}px)`;
+            });
 
-        function renderLeaderboard() {
-            const list = [
-                {n: state.name, c: state.cookies},
-                {n: "Cookie King", c: 100000}, {n: "Tapper", c: 5000}
-            ].sort((a,b) => b.c - a.c);
-            document.getElementById('leaderboard-list').innerHTML = list.map((p, i) => `<div>${i+1}. ${p.n}: ${Math.floor(p.c)}</div>`).join('');
-        }
+            const currentFPS = 1000 / deltaTime;
+            const msg = document.getElementById('performance-msg');
 
-        function hardReset() {
-            if(confirm("Delete everything?")) { localStorage.clear(); location.reload(); }
-        }
-
-        setInterval(() => {
-            if (state.autoP > 0) state.cookies += (state.autoP * state.clickP);
-            if (document.getElementById('autobuy').checked) {
-                if (state.cookies >= state.autoC) buyUpgrade('auto');
-                if (state.cookies >= state.clickC) buyUpgrade('click');
+            // DETECTION LOGIC: If CPU is doing math but FPS drops below 30
+            if (currentFPS < 30 && targets.length > 500) {
+                msg.innerHTML = "<span style='color:#e67e22'>WARNING: SCREEN BOTTLENECK. Your computer is faster than your display. Upgrade your screen for a better score!</span>";
+            } else {
+                msg.innerText = "Performance: Stable";
             }
-            updateUI();
-            save();
-        }, 1000);
 
-        updateUI();
+            document.getElementById('target-count').innerText = targets.length.toLocaleString();
+            testerLoop = requestAnimationFrame(runTester);
+        }
+
+        function spawnTarget() {
+            const el = document.createElement('div');
+            el.className = 'target';
+            const t = {
+                el: el,
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10
+            };
+            document.getElementById('render-area').appendChild(el);
+            targets.push(t);
+        }
+
+        // EXIT LOGIC
+        function confirmExit() {
+            testerActive = false; // Pause while asking
+            document.getElementById('exit-alert').style.display = 'block';
+        }
+
+        function cancelExit() {
+            document.getElementById('exit-alert').style.display = 'none';
+            // Only resume if they were already playing
+            if(document.getElementById('play-btn').innerText === "⏸️") {
+                testerActive = true;
+                runTester();
+            }
+        }
+
+        function actuallyExit() {
+            document.getElementById('exit-alert').style.display = 'none';
+            document.getElementById('tester-ui').style.display = 'none';
+            resetTester(); // Deletes all progress
+        }
     </script>
 </body>
 </html>
+
