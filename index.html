@@ -3,121 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Precision Cookie Clicker</title>
+    <title>Cookie Empire: Pro</title>
     <style>
-        body { background-color: #111; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Courier New', Courier, monospace; }
-        .stats-main { font-size: 36px; margin-bottom: 10px; color: #f1c40f; text-shadow: 2px 2px #000; }
-        #cookie { font-size: 150px; cursor: pointer; user-select: none; transition: transform 0.05s; margin: 20px 0; }
-        #cookie:active { transform: scale(0.95); }
+        body { background-color: #111; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; }
+        .stats-container { text-align: center; margin-bottom: 10px; }
+        .cookies-display { font-size: 42px; font-weight: bold; color: #f1c40f; }
         
-        .upgrade-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-        .card { background: #222; padding: 15px; border-radius: 12px; width: 220px; border: 2px solid #444; text-align: center; }
-        
-        button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
-        .btn-upgrade { background-color: #27ae60; color: white; }
-        .btn-upgrade:disabled { background-color: #444; color: #777; cursor: not-allowed; }
-        
-        .val-label { font-size: 14px; color: #aaa; margin-top: 5px; }
-        .current-stat { font-size: 18px; color: #2ecc71; font-weight: bold; }
+        #cookie { font-size: 140px; cursor: pointer; user-select: none; transition: transform 0.05s; margin: 15px 0; display: inline-block; }
+        #cookie:active { transform: scale(0.92); }
 
-        #settings-btn { margin-top: 30px; background: #555; color: white; width: auto; padding: 10px 20px; }
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #333; padding: 20px; border-radius: 10px; border: 2px solid #555; width: 250px; text-align: center; }
+        .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; max-width: 400px; }
+        .card { background: #222; padding: 12px; border-radius: 12px; border: 1px solid #444; text-align: center; }
+        
+        button { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .buy-btn { background: #27ae60; color: white; }
+        .buy-btn:disabled { background: #333; color: #666; }
+
+        .settings-bar { margin-top: 15px; display: flex; gap: 10px; }
+        .menu-btn { background: #555; color: white; padding: 10px 20px; }
+
+        /* Modal / Menu */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2c3e50; padding: 20px; border-radius: 15px; width: 280px; z-index: 100; border: 2px solid #34495e; }
+        .setting-row { display: flex; justify-content: space-between; margin: 15px 0; align-items: center; }
+        
+        #leaderboard-list { text-align: left; background: #1a252f; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="stats-main">Total: <span id="count">0</span> 🍪</div>
+    <div class="stats-container">
+        <div class="cookies-display"><span id="count">0</span> 🍪</div>
+        <div style="color: #aaa;">Clicks: <span id="val-click">1</span> | Auto: <span id="val-auto">0</span>/s</div>
+    </div>
 
     <div id="cookie">🍪</div>
 
-    <div class="upgrade-container">
+    <div class="upgrade-grid">
         <div class="card">
-            <button id="buy-click" class="btn-upgrade">Buy +1 Click Power</button>
-            <div class="val-label">Next Cost: <span id="cost-click">2</span></div>
-            <div class="val-label">Current: <span class="current-stat" id="val-click">1</span> per click</div>
+            <button id="buy-click" class="buy-btn">Double Clicks</button>
+            <div style="font-size: 12px; margin-top:5px;">Cost: <span id="cost-click">2</span></div>
         </div>
-
         <div class="card">
-            <button id="buy-auto" class="btn-upgrade">Buy +1 Auto/Sec</button>
-            <div class="val-label">Next Cost: <span id="cost-auto">2</span></div>
-            <div class="val-label">Current: <span class="current-stat" id="val-auto">0</span> per sec</div>
+            <button id="buy-auto" class="buy-btn">Double Auto</button>
+            <div style="font-size: 12px; margin-top:5px;">Cost: <span id="cost-auto">2</span></div>
         </div>
     </div>
 
-    <button id="settings-btn" onclick="toggleMenu()">⚙️ Audio Settings</button>
-
-    <div id="menu" class="modal">
-        <h3>Audio Control</h3>
-        <p><input type="checkbox" id="mute-click" checked> Click Sounds</p>
-        <p><input type="checkbox" id="mute-auto"> Auto Sounds</p>
-        <button onclick="toggleMenu()" style="background:#e74c3c">Close</button>
-    </div>
-
-    <script>
-        let cookies = 0;
-        let clickPower = 1;
-        let autoPower = 0;
-        let costClick = 2;
-        let costAuto = 2;
-
-        function playSound(freq) {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = context.createOscillator();
-            const gain = context.createGain();
-            osc.frequency.setValueAtTime(freq, context.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
-            osc.connect(gain); gain.connect(context.destination);
-            osc.start(); osc.stop(context.currentTime + 0.1);
-        }
-
-        function toggleMenu() {
-            const m = document.getElementById('menu');
-            m.style.display = (m.style.display === 'block') ? 'none' : 'block';
-        }
-
-        document.getElementById('cookie').addEventListener('click', () => {
-            cookies += clickPower;
-            if(document.getElementById('mute-click').checked) playSound(600);
-            updateDisplay();
-        });
-
-        document.getElementById('buy-click').addEventListener('click', () => {
-            if (cookies >= costClick) {
-                cookies -= costClick;
-                clickPower++;
-                costClick *= 2;
-                updateDisplay();
-            }
-        });
-
-        document.getElementById('buy-auto').addEventListener('click', () => {
-            if (cookies >= costAuto) {
-                cookies -= costAuto;
-                autoPower++;
-                costAuto *= 2;
-                updateDisplay();
-            }
-        });
-
-        function updateDisplay() {
-            document.getElementById('count').innerText = Math.floor(cookies);
-            document.getElementById('val-click').innerText = clickPower;
-            document.getElementById('val-auto').innerText = autoPower;
-            document.getElementById('cost-click').innerText = costClick;
-            document.getElementById('cost-auto').innerText = costAuto;
-            
-            document.getElementById('buy-click').disabled = cookies < costClick;
-            document.getElementById('buy-auto').disabled = cookies < costAuto;
-        }
-
-        // Automatic Loop
-        setInterval(() => {
-            if (autoPower > 0) {
-                cookies += autoPower;
-                if(document.getElementById('mute-auto').checked) playSound(300);
-                updateDisplay();
-            }
-        }, 1000);
-    </script>
-</body>
-</html>
+    <div class="settings-bar">
+        <button class="menu-btn" onclick="openMenu('settings')">⚙️ Settings</button>
+        <button class="menu-btn" onclick="openMenu('leaderboard')">🏆 R
