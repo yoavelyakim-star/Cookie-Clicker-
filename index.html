@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cookie Empire: Alphabet Edition</title>
+    <title>Cookie Empire: Fresh Start</title>
     <style>
         body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; touch-action: manipulation; width: 100vw; height: 100vh; }
         #game-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
         
-        /* SIDEBAR IDENTITY */
         #sidebar { position: fixed; left: 10px; top: 10px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
         .side-chip { background: rgba(0,255,255,0.1); padding: 8px 12px; border-radius: 8px; font-size: 13px; border: 1px solid #0ff; cursor: pointer; text-shadow: 0 0 5px #0ff; }
         
@@ -22,7 +21,6 @@
         .buy-btn { background: #27ae60; color: white; }
         .buy-btn:disabled { background: #2c3e50; color: #555; }
         
-        /* MODALS & LEADERBOARDS */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 20px; border-radius: 20px; width: 85%; max-width: 380px; z-index: 4000; border: 2px solid #444; max-height: 85vh; overflow-y: auto; }
         .lb-box { background: #000; border: 1px solid #333; border-radius: 10px; padding: 10px; margin-bottom: 15px; }
         .lb-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #222; }
@@ -54,13 +52,13 @@
                 <div style="font-size:10px; margin-top:5px">Cost: <span id="c-auto">2</span></div>
             </div>
         </div>
-        <button onclick="openMenu()" style="background:#444; color:white; margin-top:20px; padding:10px 30px; border-radius:8px;">⚙️ Rankings & Settings</button>
+        <button onclick="openMenu()" style="background:#444; color:white; margin-top:20px; padding:10px 30px; border-radius:8px;">⚙️ Leaderboards</button>
     </div>
 
     <div id="menu" class="modal">
-        <h2 style="margin:0 0 15px 0; text-align:center;">Global Rankings</h2>
+        <h2 style="margin:0 0 15px 0; text-align:center;">New Update: Rankings Reset</h2>
         
-        <div style="font-size:13px; margin-bottom:5px; color:#f1c40f;">🍪 Cookie Alphabet Elites</div>
+        <div style="font-size:13px; margin-bottom:5px; color:#f1c40f;">🍪 Cookie Elites (Alphabet System)</div>
         <div class="lb-box" id="lb-cookies"></div>
 
         <div style="font-size:13px; margin-bottom:5px; color:#0ff;">🚀 Crash Tester Records</div>
@@ -88,34 +86,30 @@
     </div>
 
     <script>
-        let state = JSON.parse(localStorage.getItem('alphaEmpire_v2')) || {
+        // --- HARD RESET LOGIC FOR NEW UPDATE ---
+        const VERSION = "2.0_RESET";
+        if (localStorage.getItem('game_version') !== VERSION) {
+            localStorage.clear(); // Wipes all old money and players
+            localStorage.setItem('game_version', VERSION);
+        }
+
+        let state = JSON.parse(localStorage.getItem('alphaEmpire_v3')) || {
             cookies: 0, clickP: 1, autoP: 0, clickC: 2, autoC: 2,
-            name: "Player", bestCrash: 0
+            name: "New Player", bestCrash: 0
         };
 
-        const fakeCookies = [{n:"Richie", s:1e25}, {n:"Bot1", s:1e18}, {n:"Noob", s:500}];
-        const fakeCrash = [{n:"HardwareKiller", s:50000}, {n:"CPU_Burner", s:12000}];
+        // Reset Leaderboard Data for the Update
+        const fakeCookies = [{n:"Legend", s:1000}, {n:"Bot_Alpha", s:500}];
+        const fakeCrash = [{n:"ProTester", s:1000}];
 
-        function save() { localStorage.setItem('alphaEmpire_v2', JSON.stringify(state)); }
+        function save() { localStorage.setItem('alphaEmpire_v3', JSON.stringify(state)); }
 
-        // THE LETTER SYSTEM (Your specific request)
         function format(num) {
             if (num < 1000) return Math.floor(num).toString();
-            
             const alpha = "abcdefghijklmnopqrstuvwxyz";
             let exponent = Math.floor(Math.log10(num) / 3);
-            let suffix = "";
-            
             let unitIdx = exponent - 1; 
-            if (unitIdx < 26) {
-                suffix = alpha[unitIdx];
-            } else {
-                // Double letter logic (aa, ab...)
-                let first = Math.floor((unitIdx - 26) / 26);
-                let second = (unitIdx - 26) % 26;
-                suffix = alpha[first] + alpha[second];
-            }
-            
+            let suffix = (unitIdx < 26) ? alpha[unitIdx] : alpha[Math.floor((unitIdx-26)/26)] + alpha[(unitIdx-26)%26];
             let base = num / Math.pow(10, exponent * 3);
             return base.toFixed(2) + suffix;
         }
@@ -131,7 +125,7 @@
         }
 
         function rename() {
-            let n = prompt("Change Nickname:", state.name);
+            let n = prompt("Enter Nickname:", state.name);
             if(n && n.trim() !== "") state.name = n.trim();
             updateUI(); save();
         }
@@ -193,3 +187,4 @@
     </script>
 </body>
 </html>
+
