@@ -1,14 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Ultimate Cookie Hyper-Growth</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Clicker</title>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; overflow-x: hidden; }
-        #money-container { font-size: 50px; color: #f1c40f; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 20px rgba(241, 196, 15, 0.3); }
-        #cookie { width: 260px; cursor: pointer; transition: transform 0.05s; user-select: none; margin-top: 20px; }
-        #cookie:active { transform: scale(0.92); }
-        .controls { margin: 20px; display: flex; justify-content: center; gap: 15px; }
-        .btn { padding: 12px 24px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.2s; background: #333; color: white; }
-        .btn.active { background: #27ae60; box-shadow: 0 0 15px #27ae60; }
-        #upgrades { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
-        .upgrade-btn { width: 320px; padding: 18px; border-radius: 12
+        body {
+            background-color: #111;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #cookie {
+            width: 200px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+        #cookie:active {
+            transform: scale(0.95);
+        }
+        .stats {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .upgrade-panel {
+            margin-top: 20px;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #333;
+            color: #777;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stats">Cookies: <span id="count">0</span></div>
+    
+    <div id="cookie" style="font-size: 150px; text-align: center;">🍪</div>
+
+    <div class="upgrade-panel">
+        <div id="upgrade-cost">Upgrade Cost: 10</div>
+        <button id="upgrade-btn" disabled>Buy Auto-Clicker</button>
+    </div>
+
+    <script>
+        let cookies = 0;
+        let autoClickers = 0;
+        let upgradeCost = 10;
+
+        const countDisplay = document.getElementById('count');
+        const cookieBtn = document.getElementById('cookie');
+        const upgradeBtn = document.getElementById('upgrade-btn');
+        const costDisplay = document.getElementById('upgrade-cost');
+
+        cookieBtn.addEventListener('click', () => {
+            cookies++;
+            updateDisplay();
+        });
+
+        upgradeBtn.addEventListener('click', () => {
+            if (cookies >= upgradeCost) {
+                cookies -= upgradeCost;
+                autoClickers++;
+                upgradeCost = Math.round(upgradeCost * 1.5);
+                updateDisplay();
+            }
+        });
+
+        function updateDisplay() {
+            countDisplay.innerText = cookies;
+            costDisplay.innerText = `Upgrade Cost: ${upgradeCost}`;
+            upgradeBtn.disabled = cookies < upgradeCost;
+        }
+
+        setInterval(() => {
+            if (autoClickers > 0) {
+                cookies += autoClickers;
+                updateDisplay();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
